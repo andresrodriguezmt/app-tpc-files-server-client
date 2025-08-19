@@ -6,48 +6,42 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.Socket;
-import java.nio.file.Files;
 import java.util.ArrayList;
 
-
-public class ClientePrincipal extends JFrame implements ActionListener{
-
+public class ClientePrincipalMen extends JFrame implements ActionListener {
     private final String titulo = "Cliente principal";
-    
     private final String letra = "Arial";
     private final String error = "Error";
     private volatile boolean ejecucion = false;
 
-    private Socket socket;
-    private DataOutputStream out;
-    private BufferedReader in;
+    private ArrayList<Integer> listaServidores = new ArrayList<>();
 
-    private final ArrayList<String> listaArchivos = new ArrayList<>();
-    private File[] archivo = new File[1];
+    private Socket socket;
+    private PrintWriter out;
+    private BufferedReader in;
 
     private JLabel labelIconoCliente;
     private JLabel tituloCliente;
     private JLabel tituloServidores;
     private JLabel tituloArchivos;
     private JLabel tituloMensajes;
+    private JLabel tituloFuncionesMensajes;
 
-    private JTextField textoServidor;
-    private JTextField textoArchivo;
+    private JTextField textoMensaje;
+
+    private JComboBox comboListaServidores;
+    private JComboBox comboListaFunciones;
 
     private JButton botonConexSer;
     private JButton botonDesconexSer;
-    private JButton botonSelecArch;
-    private JButton botonEnviarArch;
-
-    private JFileChooser escogerArchivo;
+    private JButton botonEnviarMensaje;
+    private JButton botonBuscarServidores;
 
     private JScrollPane barraAreaMensajes;
     private JTextArea areaMensajes;
-
-
     private ImageIcon imagenCliente;
 
-    public ClientePrincipal(){
+    public ClientePrincipalMen(){
         iniciarlizarComponentes();
         dimensionar();
         adicionar();
@@ -59,30 +53,34 @@ public class ClientePrincipal extends JFrame implements ActionListener{
 
         this.labelIconoCliente = new JLabel("", JLabel.CENTER);
         this.tituloCliente = new JLabel("Cliente TCP: DFRACK");
-        this.tituloServidores = new JLabel("Servidores");
-        this.tituloArchivos = new JLabel("Seleccionar Archivos");
+        this.tituloServidores = new JLabel("lista de Servidores");
+        this.tituloArchivos = new JLabel("Escribir mensaje:");
         this.tituloMensajes = new JLabel("Mensajes");
+        this.tituloFuncionesMensajes = new JLabel("Enviar Mensaje a:");
 
-        this.textoServidor = new JTextField();
+        this.textoMensaje = new JTextField();
 
-        this.textoArchivo = new JTextField();
-        textoArchivo.setEditable(false);
+        this.comboListaServidores = new JComboBox<>();
+        this.comboListaFunciones = new JComboBox<>();
+
+        this.botonBuscarServidores = new JButton("Buscar ■");
+        this.botonBuscarServidores.setBackground(Color.decode("#BAC6E8"));
+        this.botonBuscarServidores.setFont(new Font(letra, Font.BOLD, 13));
 
         this.botonConexSer = new JButton("Conectar ▲");
         this.botonConexSer.setBackground(Color.decode("#DFEDDD"));
         this.botonConexSer.setFont(new Font(letra, Font.BOLD, 12));
+        this.botonConexSer.setEnabled(false);
 
         this.botonDesconexSer = new JButton("Desconectar ▼");
         this.botonDesconexSer.setBackground(Color.decode("#EDDDDD"));
         this.botonDesconexSer.setFont(new Font(letra, Font.BOLD, 12));
+        this.botonDesconexSer.setEnabled(false);
 
-        this.botonSelecArch = new JButton("Seleccionar ♦");
-        this.botonSelecArch.setBackground(Color.decode("#B4B6CC"));
-        this.botonSelecArch.setFont(new Font(letra, Font.BOLD, 12));
-
-        this.botonEnviarArch = new JButton("Enviar ►");
-        this.botonEnviarArch.setBackground(Color.decode("#B0C2BF"));
-        this.botonEnviarArch.setFont(new Font(letra, Font.BOLD, 12));
+        this.botonEnviarMensaje = new JButton("Enviar ►");
+        this.botonEnviarMensaje.setBackground(Color.decode("#B0C2BF"));
+        this.botonEnviarMensaje.setFont(new Font(letra, Font.BOLD, 12));
+        this.botonEnviarMensaje.setEnabled(false);
 
         this.areaMensajes = new JTextArea("");
 
@@ -90,13 +88,11 @@ public class ClientePrincipal extends JFrame implements ActionListener{
         this.labelIconoCliente.setIcon(this.imagenCliente);
 
         this.areaMensajes = new JTextArea(20,30);
-        this.areaMensajes.setEnabled(false);
+        this.areaMensajes.setEditable(false);
 
         this.barraAreaMensajes = new JScrollPane();
         this.barraAreaMensajes.setViewportView(this.areaMensajes);
 
-        this.escogerArchivo = new JFileChooser();
-        escogerArchivo.setDialogTitle("Escoger un archivo a enviar");
     }
 
     public void dimensionar(){
@@ -107,17 +103,22 @@ public class ClientePrincipal extends JFrame implements ActionListener{
         this.tituloCliente.setBounds(106,100, 140,10);
 
         this.tituloServidores.setBounds(30,130,140,10);
-        this.textoServidor.setBounds(30,150,140,25);
+        this.comboListaServidores.setBounds(30,150,140,25);
+        this.botonBuscarServidores.setBounds(200, 145, 90,30);
+
         this.botonConexSer.setBounds(40,190, 110,30);
         this.botonDesconexSer.setBounds(170,190, 125,30);
 
         this.tituloArchivos.setBounds(30, 260, 140, 10);
-        this.textoArchivo.setBounds(30,280, 250, 25);
-        this.botonSelecArch.setBounds(45, 320, 120, 30);
-        this.botonEnviarArch.setBounds(190,320,90,30);
+        this.textoMensaje.setBounds(30,280, 250, 25);
 
-        this.tituloMensajes.setBounds(30,380, 100,10);
-        this.barraAreaMensajes.setBounds(30, 405, 275, 130);
+        this.tituloFuncionesMensajes.setBounds(30, 315, 150, 10);
+        this.comboListaFunciones.setBounds(30, 335, 150, 25);
+
+        this.botonEnviarMensaje.setBounds(30, 375, 100, 30);
+
+        this.tituloMensajes.setBounds(30,425, 100,10);
+        this.barraAreaMensajes.setBounds(30, 450, 275, 130);
     }
 
     public void adicionar(){
@@ -127,14 +128,17 @@ public class ClientePrincipal extends JFrame implements ActionListener{
         this.add(tituloServidores);
         this.add(tituloArchivos);
         this.add(tituloMensajes);
+        this.add(tituloFuncionesMensajes);
 
-        this.add(textoServidor);
-        this.add(textoArchivo);
+        this.add(textoMensaje);
 
+        this.add(comboListaServidores);
+        this.add(comboListaFunciones);
+
+        this.add(botonBuscarServidores);
         this.add(botonConexSer);
         this.add(botonDesconexSer);
-        this.add(botonSelecArch);
-        this.add(botonEnviarArch);
+        this.add(botonEnviarMensaje);
 
         this.add(barraAreaMensajes);
     }
@@ -142,16 +146,17 @@ public class ClientePrincipal extends JFrame implements ActionListener{
     public void visualizar(){
         this.setTitle(titulo);
         this.setVisible(true);
-        this.setSize(350,600);
+        this.setSize(350,650);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        this.getContentPane().setBackground(Color.WHITE);
     }
 
     public void accionar(){
         this.botonConexSer.addActionListener(this);
         this.botonDesconexSer.addActionListener(this);
-        this.botonSelecArch.addActionListener(this);
-        this.botonEnviarArch.addActionListener(this);
+        this.botonEnviarMensaje.addActionListener(this);
+        this.botonBuscarServidores.addActionListener(this);
     }
 
     @Override
@@ -163,32 +168,21 @@ public class ClientePrincipal extends JFrame implements ActionListener{
         else if(e.getSource() == this.botonDesconexSer){
             desconectar();
         }
-        else if(e.getSource() == this.botonSelecArch){
-            seleccionarArchivo();
+        else if(e.getSource() == this.botonBuscarServidores){
+            actualizarServidoresCombo();
+
+            if(!listaServidores.isEmpty()){
+                this.botonConexSer.setEnabled(true);
+            }
         }
-        else if(e.getSource() == this.botonEnviarArch){
-            enviarArchivos();
+        else if(e.getSource() == this.botonEnviarMensaje){
+            enviarMensaje();
         }
+
     }
 
     private int capturarPuerto(){
-
-        String capturaPuerto = textoServidor.getText();
-
-        if (!capturaPuerto.matches("\\d+")) {
-            JOptionPane.showMessageDialog(this, "El dato debe ser numérico.", error, JOptionPane.ERROR_MESSAGE);
-            textoServidor.setText("");
-            return 0;
-        }else{
-            int puerto = Integer.parseInt(capturaPuerto);
-            if(puerto < 0 || puerto > 65535){
-                JOptionPane.showMessageDialog(this, "El puerto especificado no es válido (debe estar entre 0 y 65535)..", error, JOptionPane.ERROR_MESSAGE);
-                textoServidor.setText("");
-                return 0;
-            }else{
-                return puerto;
-            }
-        }
+        return (int) comboListaServidores.getSelectedItem();
     }
 
     public void conectar(int puerto){
@@ -196,18 +190,31 @@ public class ClientePrincipal extends JFrame implements ActionListener{
 
         try {
             if (socket == null || socket.isClosed()) {
-                socket = new Socket("localhost", puerto);
-                out = new DataOutputStream(socket.getOutputStream());
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                socket = new Socket("localhost", puerto); // Asume que el servidor está en localhost y escucha en el puerto 5555
+                out = new PrintWriter(socket.getOutputStream(), true);
             }
 
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
             ejecucion = true;
-            // Si la conexión fue exitosa, arranca el hilo para leer mensajes
+
+            configurarBotones(1);
+
             new Thread(() -> {
                 try {
                     String fromServer;
                     while (ejecucion && (fromServer = in.readLine()) != null) {
-                        areaMensajes.append("Servidor: " + fromServer + "\n");
+                        if (fromServer.startsWith("LIST:")) {
+                            // Actualizar comboBox
+                            comboListaFunciones.removeAllItems();
+                            String[] clientes = fromServer.substring(5).split(",");
+
+                            for (String c : clientes) {
+                                comboListaFunciones.addItem(c);
+                            }
+                        } else {
+                            areaMensajes.append(fromServer + "\n");
+                        }
                     }
                 } catch (IOException ex) {
                     if ("Socket closed".equals(ex.getMessage())) {
@@ -221,12 +228,6 @@ public class ClientePrincipal extends JFrame implements ActionListener{
 
             JOptionPane.showMessageDialog(this, "Conexión establecida con el servidor.", "Completado ...", JOptionPane.INFORMATION_MESSAGE);
 
-        }
-        catch (IllegalArgumentException e) {
-            JOptionPane.showMessageDialog(this,
-                    "El puerto especificado no es válido (debe estar entre 0 y 65535).",
-                    error,
-                    JOptionPane.ERROR_MESSAGE);
         }
         catch (IOException e) {
             // No mostramos el error en consola, solo advertimos al usuario
@@ -259,6 +260,9 @@ public class ClientePrincipal extends JFrame implements ActionListener{
                 out.close();
                 out = null;
             }
+            configurarBotones(2);
+            comboListaFunciones.removeAllItems();
+            areaMensajes.setText("");
 
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this,
@@ -268,67 +272,64 @@ public class ClientePrincipal extends JFrame implements ActionListener{
         }
     }
 
-    public void seleccionarArchivo(){
-        if(escogerArchivo.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            archivo[0] = escogerArchivo.getSelectedFile();
-            textoArchivo.setText("Archivo: " + archivo[0].getName());
+
+    public void visualizarServidores(){
+        for (int puerto = 15000; puerto <= 16000; puerto++) {
+            try (Socket socket = new Socket("localhost", puerto)) {
+                listaServidores.add(puerto);
+            } catch (IOException e) {
+                // No hay servidor en este puerto
+            }
         }
     }
 
-    public void enviarArchivos(){
-
-        if (socket == null || socket.isClosed() || out == null) {
-            JOptionPane.showMessageDialog(this,
-                    "No hay conexión con el servidor. Conéctese primero.",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if(archivo[0] == null){
-            JOptionPane.showMessageDialog(this,
-                    "Debe seleccionar primero un archivo",
-                    "Cuidado ..",
-                    JOptionPane.INFORMATION_MESSAGE);
-        }else{
-
-            try (FileInputStream archivoEntrada = new FileInputStream(archivo[0])) {
-                DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-
-                // Enviar nombre del archivo
-                String nombreArchivo = archivo[0].getName();
-                byte[] bytesNombreArch = nombreArchivo.getBytes();
-                dos.writeInt(bytesNombreArch.length);
-                dos.write(bytesNombreArch);
-
-                // Enviar tamaño del archivo
-                long tamanio = archivo[0].length();
-                dos.writeLong(tamanio);
-
-                // Enviar contenido del archivo por bloques
-                byte[] buffer = new byte[4096];
-                int bytesLeidos;
-                while ((bytesLeidos = archivoEntrada.read(buffer)) != -1) {
-                    dos.write(buffer, 0, bytesLeidos);
-                }
-
-                dos.flush();
-
-                areaMensajes.append("Archivo enviado: " + nombreArchivo + "\n");
-
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(this,
-                        "Error al enviar el archivo.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+    public void actualizarServidoresCombo(){
+        eliminarListaServidores();
+        visualizarServidores();
+        SwingUtilities.invokeLater(() -> {
+            comboListaServidores.removeAllItems();
+            for (Integer servidor : listaServidores) {
+                comboListaServidores.addItem(servidor);
             }
+        });
+    }
+
+    public void eliminarListaServidores(){
+        listaServidores = new ArrayList<>();
+        comboListaServidores.removeAllItems();
+    }
+
+    public void configurarBotones(int decision){
+
+        switch (decision){
+            case 1:
+                this.botonConexSer.setEnabled(false);
+                this.botonDesconexSer.setEnabled(true);
+                this.botonEnviarMensaje.setEnabled(true);
+                this.botonBuscarServidores.setEnabled(false);
+                this.comboListaServidores.setEnabled(false);
+                break;
+            case 2:
+                this.botonDesconexSer.setEnabled(false);
+                this.botonConexSer.setEnabled(true);
+                this.botonBuscarServidores.setEnabled(true);
+                this.botonEnviarMensaje.setEnabled(false);
+                this.comboListaServidores.setEnabled(true);
+                break;
+            default:
+                // no acciona nada
         }
+    }
+
+    private void enviarMensaje() {
+        out.println(comboListaFunciones.getSelectedItem() + ":" + textoMensaje.getText());
+        textoMensaje.setText("");
     }
 
     public static void main(String[] args){
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run(){
-                new ClientePrincipal();
+                new ClientePrincipalMen();
             }
         });
     }

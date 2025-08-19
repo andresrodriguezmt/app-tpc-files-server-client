@@ -12,7 +12,7 @@ import java.net.Socket;
  */
 public class PrincipalCli extends javax.swing.JFrame {
 
-    private final int PORT = 12345;
+    private final int PORT = 61610;
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
@@ -97,7 +97,6 @@ public class PrincipalCli extends javax.swing.JFrame {
     }
     private void btEnviarActionPerformed(java.awt.event.ActionEvent evt) {
         this.enviarMensaje();
-
     }
 
 
@@ -146,14 +145,11 @@ public class PrincipalCli extends javax.swing.JFrame {
             }).start();
             System.out.println(out);
         }catch (IOException e){
-            
+
         }
     }
     private void enviarMensaje() {
         out.println(mensajeTxt.getText());
         mensajeTxt.setText("");
-
-
-
     }
 }
