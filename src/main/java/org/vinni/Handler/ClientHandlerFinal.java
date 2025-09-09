@@ -59,6 +59,9 @@ public class ClientHandlerFinal extends Thread {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+            cerrarConexion();
+
             clientesServ.remove(clientSocket);
 
             servidorPrincipalFinal.removerCliente(this);
@@ -193,6 +196,32 @@ public class ClientHandlerFinal extends Thread {
 
     public int getClientId() {
         return clientId;
+    }
+
+    public void cerrarConexion() {
+        try {
+            if (dis != null) {
+                dis.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            if (dos != null) {
+                dos.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            if (clientSocket != null && !clientSocket.isClosed()) {
+                clientSocket.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
 

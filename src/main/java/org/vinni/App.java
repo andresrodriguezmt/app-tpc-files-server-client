@@ -1,13 +1,11 @@
 package org.vinni;
 
-/**
- * Hello world!
- *
- */
+import org.vinni.servidor.gui.ServidorPrincipalFinal;
+
 public class App 
 {
     public static void main( String[] args )
     {
-        System.out.println( "Iniciando Aplicacion" );
+        ServidorPrincipalFinal servidorPrincipalFinal = new ServidorPrincipalFinal();
     }
 }

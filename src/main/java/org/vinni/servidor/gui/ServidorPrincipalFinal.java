@@ -22,9 +22,10 @@ public class ServidorPrincipalFinal extends JFrame implements ActionListener {
 
     private ServerSocket servidorSocket;
     private Socket clienteSocket;
-    private DataInputStream in;     // CAMBIO: antes BufferedReader
+    private DataInputStream in;
     private DataOutputStream out;
 
+    private int puerto  = 15600;
     private final ArrayList<Socket> clientesServ = new ArrayList<>();
     private final ArrayList<Integer> idEnUso = new ArrayList<>();
     private final ArrayList<ClientHandlerFinal> listaClientesManejados = new ArrayList<>();
@@ -56,6 +57,10 @@ public class ServidorPrincipalFinal extends JFrame implements ActionListener {
         adicionar();
         visualizar();
         accionar();
+
+        if (verificarExistenciaServidor(puerto)){
+            encenderServidor();
+        }
     }
 
     public void inicializarComponentes(){
@@ -164,14 +169,16 @@ public class ServidorPrincipalFinal extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if(e.getSource() == this.botonEncerderServ){
-            int puerto = definirPuertoServ();
-            encenderServidor(puerto);
+            if (verificarExistenciaServidor(puerto)){
+                encenderServidor();
+            }
         } else if (e.getSource() == this.botonApagarSer) {
             apagarServidor();
         }
     }
 
-    public void encenderServidor(int puerto){
+    public void encenderServidor(){
+
         JOptionPane.showMessageDialog(this,
                 "Intentando iniciar servidor ...",
                 "Iniciando ...",
@@ -194,7 +201,9 @@ public class ServidorPrincipalFinal extends JFrame implements ActionListener {
 
                     int numeroCliente = generarIdUnico(idEnUso);
                     idEnUso.add(numeroCliente);
-                    areaMensajes.append("Cliente " + numeroCliente + " conectado desde "
+                    areaMensajes.append("Cliente "
+                            + numeroCliente
+                            + " conectado desde "
                             + clienteSocket.getInetAddress().getHostAddress() + "\n");
 
                     actualizarCombo();
@@ -233,30 +242,23 @@ public class ServidorPrincipalFinal extends JFrame implements ActionListener {
 
     private void apagarServidor(){
         try {
+            // Detener loop de aceptar conexiones
             estadoServidor = false;
 
-            if (in != null) {
-                in.close();
+            // Cerrar conexiones activas
+            for (ClientHandlerFinal handler : listaClientesManejados) {
+                handler.cerrarConexion();
             }
-            if (out != null) {
-                out.close();
-            }
+            listaClientesManejados.clear();
 
-            if (clienteSocket != null && !clienteSocket.isClosed()) {
-                clienteSocket.close();
-            }
-
-            // Cerrar socket de servidor
+            // Cerrar socket del servidor
             if (servidorSocket != null && !servidorSocket.isClosed()) {
                 servidorSocket.close();
             }
 
             configurarBotones(2);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this,
-                    "ha ocurrido un error al apagar el servidor",
-                    error,
-                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
     }
     public void configurarBotones(int decision){
@@ -276,21 +278,13 @@ public class ServidorPrincipalFinal extends JFrame implements ActionListener {
             default:
         }
     }
-    public int definirPuertoServ(){
-        Random rand = new Random();
-        int puertoVer;
-        do {
-            puertoVer = rand.nextInt(16000 - 15000 + 1) + 15000;
-        } while (verificarExistenciaServidor(puertoVer));
-        return puertoVer;
-    }
     public boolean verificarExistenciaServidor(int puertoVer){
         try (ServerSocket serverSocket = new ServerSocket(puertoVer)) {
             // Si llegamos aquí, el puerto está libre
-            return false;
+            return true;
         } catch (IOException e) {
             // Si falla, el puerto ya está en uso
-            return true;
+            return false;
         }
     }
 
@@ -374,6 +368,7 @@ public class ServidorPrincipalFinal extends JFrame implements ActionListener {
     public void removerCliente(ClientHandlerFinal cliente) {
         listaClientesManejados.remove(cliente);
     }
+
 
     public  static void main(String args[]){
         java.awt.EventQueue.invokeLater(new Runnable() {
